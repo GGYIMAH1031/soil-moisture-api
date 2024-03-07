@@ -112,6 +112,38 @@ def predict(d:Input):
     #return d.atm_pressure_kPa*d.Soil_conductivity_5cm_S000988*100
 
 
+@app.post('/predict')
+#def predict(atm_pressure_kPa:float, precipitation_mm:float, Soil_conductivity_5cm_S000988:float, 
+#            radiation_W_m2:float, rel_humidity:float, Temp_2m_Celsius:float, windspeed_m_s:float): 
+def predict(d:Input):       
+    # Preprocess the model inputs
+    d.atm_pressure_kPa*=1.0
+    d.precipitation_mm*=1.0 
+    d.Soil_conductivity_5cm_S000988*=1.0
+    d.radiation_W_m2*=1.0
+    d.rel_humidity*=1.0
+    d.Temp_2m_Celsius*=1.0
+    d.windspeed_m_s*=1.0
+    
+    # Convert inputs into a pandas dataframe
+    X_inputs={"atm_pressure_kPa":[d.atm_pressure_kPa], 
+           "precipitation_mm":[d.precipitation_mm], 
+           "Soil_conductivity_5cm_S000988":[d.Soil_conductivity_5cm_S000988], 
+           "radiation_W_m2":[d.radiation_W_m2], 
+           "rel_humidity":[d.rel_humidity],
+           "Temp_2m_Celsius":[d.Temp_2m_Celsius],
+           "windspeed_m_s":[d.windspeed_m_s]}
+    
+    X_inputs_df = pd.DataFrame(X_inputs)
+
+
+    # Run inference using model inputs
+    soil_moisture_5cm_S000988 = model.predict(X_inputs_df, model='WeightedEnsemble_L2')  
+    
+    #return the numeric portion of the model prediction
+    return soil_moisture_5cm_S000988[0] 
+
+
 @app.post('/batch/')
 async def batch_inference(file: bytes = File(...)):
     # Correctly handle the uploaded file bytes

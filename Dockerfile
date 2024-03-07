@@ -1,51 +1,26 @@
-# Use the official Python image as a base
-#FROM python:3.10
+
+# Use python:3.10-slim as the base image for a lightweight container
 FROM python:3.10-slim
-#FROM python:3.10-slim
 
+# Set /app as the working directory. All the commands below will be run in this directory.
+WORKDIR /app
 
-# Set the working directory
-WORKDIR /app	
+# Copy only the requirements file first to leverage Docker cache
+# This prevents re-installing all dependencies upon every build if the requirements didn't change
+COPY requirements.txt .
 
-# Concat to reduce # of layers
+# Install dependencies in a single RUN command to reduce image layers
+# Also, combine the pip upgrade and other installations into one layer to reduce the overall size
+# We're using `--no-cache-dir` to not store the index on disk, making the image smaller
+# Note that if torch and torchvision versions are specified in the requirements.txt,
+# this step can be simplified further
+RUN pip install -U pip setuptools wheel --no-cache-dir && \
+    pip install torch==2.0.1+cpu torchvision==0.15.2+cpu --find-links https://download.pytorch.org/whl/cpu --no-cache-dir && \
+    pip install autogluon --no-cache-dir && \
+    pip install -r requirements.txt --no-cache-dir
 
-RUN apt-get update && \
-    apt-get install -y python3-venv && \
-    pip install -U pip && \
-    pip install --upgrade pip && \
-    pip install -U setuptools wheel && \
-    pip install torch==2.0.1+cpu torchvision==0.15.2+cpu --index-url https://download.pytorch.org/whl/cpu && \
-    pip install autogluon && \
-    pip install --no-cache-dir -r requirements.txt && \
-    python3 -m venv soilmoisture_env
-	
-#upgrade pip
-#RUN pip install --upgrade pip && \
+# Now copy the rest of the app's source code
+COPY . .
 
-
-# Install virtualenv
-#RUN pip install --upgrade pip && \
-#    pip install --no-cache-dir -r requirements.txt
-
-
-# Create and activate virtual environment
-#RUN python3 -m venv soilmoisture_env
-
-
-# Activate virtual environment
-ENV PATH="./app/soilmoisture_env/bin:$PATH"
-
-
-
-# Copy the requirements file into the container at /app
-#COPY requirements.txt /app/
-
-
-# Install any needed packages specified in requirements.txt
-#RUN pip install --no-cache-dir -r requirements.txt
-
-# Copy the current directory contents into the container at /app
-COPY . /app/
-
-# Specify the command to run on container start
+# Specify the default command to run when starting the container
 CMD ["python", "app.py"]

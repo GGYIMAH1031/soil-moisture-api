@@ -10,7 +10,6 @@ import json
 import os
 
 
-
 from sklearn import linear_model
 from sklearn.linear_model import Ridge
 from sklearn.ensemble import RandomForestRegressor
@@ -19,9 +18,6 @@ from sklearn.metrics import mean_absolute_error, r2_score
 from autogluon.tabular import TabularDataset, TabularPredictor
 
 #
-
-
-
 
 model_dir="FinalModel-SoilMoisture"
 

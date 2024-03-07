@@ -1,0 +1,8 @@
+fastapi
+pydantic
+pandas
+requests
+mlflow
+pandas
+scikit-learn
+gradio

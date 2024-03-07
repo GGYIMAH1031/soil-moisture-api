@@ -11,13 +11,13 @@ WORKDIR /app
 
 RUN apt-get update && \
     apt-get install -y python3-venv && \
-	pip install -U pip && \
-	pip install --upgrade pip && \
-	pip install -U setuptools wheel && \
-	pip install torch==2.0.1+cpu torchvision==0.15.2+cpu --index-url https://download.pytorch.org/whl/cpu && \
-	pip install autogluon && \
-	pip install --no-cache-dir -r requirements.txt && \
-	python3 -m venv soilmoisture_env
+    pip install -U pip && \
+    pip install --upgrade pip && \
+    pip install -U setuptools wheel && \
+    pip install torch==2.0.1+cpu torchvision==0.15.2+cpu --index-url https://download.pytorch.org/whl/cpu && \
+    pip install autogluon && \
+    pip install --no-cache-dir -r requirements.txt && \
+    python3 -m venv soilmoisture_env
 	
 #upgrade pip
 #RUN pip install --upgrade pip && \

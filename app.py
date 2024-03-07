@@ -1,6 +1,6 @@
 from fastapi import FastAPI, File, Form, UploadFile
 from pydantic import BaseModel
-from io import StringIO
+from io import StringIO, BytesIO
 import pandas as pd
 import numpy as np
 import requests
@@ -76,11 +76,11 @@ def predict(d:Input):
     X_inputs_df = pd.DataFrame(X_inputs)
 
     # Run inference using model inputs
-    #soil_moisture_5cm_S000988 = model.predict(X_inputs_df, model='WeightedEnsemble_L2')  
+    soil_moisture_5cm_S000988 = model.predict(X_inputs_df, model='WeightedEnsemble_L2')  
     
     #return the numeric portion of the model prediction
-    #return soil_moisture_5cm_S000988[0] 
-    return d.atm_pressure_kPa*d.Soil_conductivity_5cm_S000988*100
+    return soil_moisture_5cm_S000988[0] 
+    #return d.atm_pressure_kPa*d.Soil_conductivity_5cm_S000988*100
 
 
 @app.get('/predict')
@@ -109,78 +109,34 @@ def predict(d:Input):
 
 
     # Run inference using model inputs
-    #soil_moisture_5cm_S000988 = model.predict(X_inputs_df, model='WeightedEnsemble_L2')  
+    soil_moisture_5cm_S000988 = model.predict(X_inputs_df, model='WeightedEnsemble_L2')  
     
     #return the numeric portion of the model prediction
-    #return soil_moisture_5cm_S000988[0] 
-    return d.atm_pressure_kPa*d.Soil_conductivity_5cm_S000988*100
-
-
-
-@app.post('/predict')
-async def single_inference(X_inputs: dict):
-    url = 'http://127.0.0.1:7070/invocations'
-    headers={'Content-Type':'application/json'}
-    X_data = X_inputs.dict()
-    # model input must be list of lists or pandas dataframe
-    data_in=[[X_data['age'], X_data['sex'],X_data['bmi'],X_data['bp'],X_data['s1'],
-             X_data['s2'],X_data['s3'],X_data['s4'],X_data['s5'],X_data['s6']]]
-    print(data_in)
-    #inference_request=json.dumps({'inputs':[inputs]})
-    inference_request={"inputs":data_in}
-    print(inference_request)
-    #response=requests.post(url,inference_request,headers=headers)
-    response=requests.post(url,json=inference_request)
-    print(response)
-    return response.text
-
-
-
-
-
-@app.post('/predicts')
-async def single_inferences(X_inputs: dict):
-    #X_inputs=diabetesClass(**X_inputs)
-    url = 'http://127.0.0.1:7070/invocations'
-    headers = {'Content-Type': 'application/json'}
-    X_data = np.array([X_inputs.values()])
-    # model input must be list of lists or pandas dataframe
-    #data_in = np.array([[X_data['age'], X_data['sex'], X_data['bmi'], X_data['bp'], X_data['s1'],
-    #            X_data['s2'], X_data['s3'], X_data['s4'], X_data['s5'], X_data['s6']]])
-    inference_request = {"inputs": X_data}
-    print(inference_request)
-    response = requests.post(url, json=inference_request, headers=headers)
-    print(inference_request)
-    return response.text
+    return soil_moisture_5cm_S000988[0] 
+    #return d.atm_pressure_kPa*d.Soil_conductivity_5cm_S000988*100
 
 
 @app.post('/batch/')
-async def batch_inference(file: bytes=File(...)):
-    # Upload file to test batch predictions
-    s=str(file,'utf-8')
-    file=StringIO(s)
-    #if file.filename.endswith('.csv'):
-    #    data_df = pd.read_csv(file.file)
-    if file.filename.endswith(('.csv', '.txt')):
-        data_df = pd.read_csv(file.file, delimiter='\t')  # Use delimiter='\t' for tab-separated files
-    elif file.filename.endswith(('.xls', '.xlsx')):
-        data_df = pd.read_excel(file.file)
-    elif file.filename.endswith('.json'):
-        data_df = pd.read_json(file.file)
-    else:
-        return 'Unsupported file format. Supported formats are .csv, .xls, .xlsx and .json'
+async def batch_inference(file: bytes = File(...)):
+    # Correctly handle the uploaded file bytes
+    data_df = pd.read_csv(BytesIO(file))
+    
+    # Optionally, you can preprocess the DataFrame if needed
+    # For example, if you need to drop or modify any columns, do it here
 
-    url = 'http://127.0.0.1:7070/invocations'
-    headers = {'Content-Type': 'application/json'}
-    # model input must be list of lists or pandas dataframe
-    #request_data = data_df.to_json(orient='values')
-    inference_request = json.dumps({'inputs':data_df})
-    response = requests.post(url, inference_request, headers=headers)
-    print(inference_request)
-    return response.text
+    # Run inference using the model
+    # Since the specifics of model.predict method depend on your model,
+    # ensure to adapt this part to match your model's API
+    
 
-
-
+    predictions = model.predict(data_df, as_pandas=True)  # Assuming 'as_pandas' returns DataFrame
+    
+    # Convert predictions to JSON or any suitable format for API response
+    return {
+        "predictions": predictions.to_dict(orient='records')  # Converts DataFrame to a list of dicts
+    }
+    
+    #return data_df.sum().sum()
 
 
 
